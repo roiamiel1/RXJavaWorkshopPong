@@ -33,6 +33,6 @@ class KeyListener implements java.awt.event.KeyListener {
 
     @Override
     public void keyReleased(KeyEvent e) {
-        keysEvents.onNext(Keys.NONE);
+        lastKey = Keys.NONE;
     }
 }
