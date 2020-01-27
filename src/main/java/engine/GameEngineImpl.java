@@ -45,8 +45,8 @@ class GameEngineImpl extends JFrame implements GameEngine {
         runEventsCounter();
 
         this.padA = clampToFrame(playerLocation.x, playerLocation.y, GretaImpl.playerWidth, GretaImpl.playerHeight);
-        this.padB = clampToFrame(-1000, -1000, GretaImpl.playerWidth, GretaImpl.playerHeight);
-        this.ball = clampToFrame(-1000, -1000, BallImpl.ballWidth, BallImpl.ballHeight);
+        this.padB = new Point(-1000, -1000);
+        this.ball = new Point(-1000, -1000);
         repaint();
     }
 
