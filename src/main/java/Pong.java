@@ -2,6 +2,8 @@ import engine.Ball;
 import engine.GameEngine;
 import engine.Greta;
 
+import java.awt.*;
+
 public class Pong  {
     private static final int WIDTH = 500;
     private static final int HEIGHT = 400;
@@ -12,6 +14,10 @@ public class Pong  {
 
     public void init() {
         // todo you code goes here
+        gameEngine.getRenderThread().scheduleDirect(() -> {
+           gameEngine.drawFrame(new Point(0, 0),
+                   new Point(0, 0), new Point(0, 0));
+        });
     }
 
     public static void main(String[] args) {

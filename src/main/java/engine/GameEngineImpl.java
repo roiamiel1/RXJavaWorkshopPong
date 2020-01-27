@@ -3,8 +3,12 @@ package engine;
 import io.reactivex.*;
 import io.reactivex.schedulers.Schedulers;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.ImageObserver;
+import java.io.File;
+import java.io.IOException;
 import java.util.concurrent.Executors;
 
 class GameEngineImpl extends JFrame implements GameEngine {
@@ -13,6 +17,8 @@ class GameEngineImpl extends JFrame implements GameEngine {
     private static final int MAX_EVENTS_PER_SEC = 30;
 
     private final KeyListener keyListener = new KeyListener();
+
+    private Image image;
 
     private final int width;
     private final int height;
@@ -37,6 +43,8 @@ class GameEngineImpl extends JFrame implements GameEngine {
         this.setBackground(Color.DARK_GRAY);
         this.addKeyListener(keyListener);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        try { this.image = ImageIO.read(new File("Picture1.png")); } catch (IOException e) { }
     }
 
     @Override
@@ -90,8 +98,8 @@ class GameEngineImpl extends JFrame implements GameEngine {
         graphics.fillRect(ball.x, ball.y, BallImpl.ballWidth, BallImpl.ballHeight);
         graphics.setColor(Color.CYAN);
         graphics.fillRect(padA.x, padA.y, GretaImpl.playerWidth, GretaImpl.playerHeight);
-        graphics.setColor(Color.MAGENTA);
-        graphics.fillRect(padB.x, padB.y, GretaImpl.playerWidth, GretaImpl.playerHeight);
+        graphics.drawImage(image, padB.x - 50, padB.y, GretaImpl.playerWidth * 6,
+                GretaImpl.playerHeight * 3, this);
 
         g.drawImage(gameImage, 0, 0, this);
     }
