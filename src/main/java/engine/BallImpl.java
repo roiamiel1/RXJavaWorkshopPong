@@ -1,18 +1,15 @@
 package engine;
 
 import io.reactivex.Observable;
-import io.reactivex.Single;
-import org.w3c.dom.css.Rect;
 
 import java.awt.*;
-import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-class RemoteBallImpl implements RemoteBall {
+class BallImpl implements Ball {
     private Point lastLocation;
 
     private int xDirection = 1;
-    private int yDirection = 0;
+    private int yDirection = -1;
 
     private final int width;
     private final int height;
@@ -20,7 +17,7 @@ class RemoteBallImpl implements RemoteBall {
     private Point playerALocation = new Point(0, 0);
     private Point playerBLocation = new Point(0, 0);
 
-    public RemoteBallImpl(int width, int height) {
+    public BallImpl(int width, int height) {
         this.width = width;
         this.height = height;
         this.lastLocation = new Point(width / 2, height / 2);
@@ -36,16 +33,16 @@ class RemoteBallImpl implements RemoteBall {
         return Observable.interval(0, 6, TimeUnit.MILLISECONDS).map(i -> {
             move();
             return lastLocation;
-        });
+        }).distinctUntilChanged();
     }
 
     private void move() {
         Rectangle ballRect = new Rectangle(lastLocation.x, lastLocation.y,
                 ballWidth, ballHeight);
         Rectangle playerARect = new Rectangle(playerALocation.x, playerALocation.y,
-                RemotePlayerImpl.playerWidth, RemotePlayerImpl.playerHeight);
+                GretaImpl.playerWidth, GretaImpl.playerHeight);
         Rectangle playerBRect = new Rectangle(playerBLocation.x, playerBLocation.y,
-                RemotePlayerImpl.playerWidth, RemotePlayerImpl.playerHeight);
+                GretaImpl.playerWidth, GretaImpl.playerHeight);
 
         if (ballRect.intersects(playerARect)) {
             xDirection = 1;
