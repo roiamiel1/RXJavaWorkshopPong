@@ -1,23 +1,17 @@
+import engine.Ball;
 import engine.GameEngine;
-import engine.RemoteBall;
-import engine.RemotePlayer;
-import io.reactivex.Flowable;
-import io.reactivex.Observable;
+import engine.Greta;
 
 public class Pong  {
     private static final int WIDTH = 500;
     private static final int HEIGHT = 400;
 
-    private final RemoteBall remoteBall = RemoteBall.create(WIDTH, HEIGHT);
-    private final RemotePlayer remotePlayer = RemotePlayer.create(WIDTH, HEIGHT);
+    private final Ball ball = Ball.create(WIDTH, HEIGHT);
+    private final Greta greta = Greta.create(WIDTH, HEIGHT);
     private final GameEngine gameEngine = GameEngine.create(WIDTH, HEIGHT);
 
     public void init() {
-        Observable.combineLatest(remoteBall.getLocation(),
-                remotePlayer.getLocation(), (ball, player) -> {
-                      
-                    return null;
-                }).subscribe();
+        // todo you code goes here
     }
 
     public static void main(String[] args) {

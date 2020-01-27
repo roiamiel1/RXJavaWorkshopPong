@@ -8,14 +8,20 @@ import java.awt.*;
 public interface GameEngine {
 
     /**
-     * Draw a frame to the screen, don't call more then 20 times in a sec,
-     * and call only on the render scheduler.
+     * Note! Use in part A of the exercise (not in B).
+     * call only on the render thread and not more then 30 times per second!
      */
-    public void drawFrame(Point padA, Point padB, Point ball);
+    public void drawSinglePlayer(Point playerLocation);
 
-    public Scheduler getRenderScheduler();
+    /**
+     * Note! Use in part B of the exercise (not in A).
+     * Note! call only on the render thread and not more then 30 times per second!
+     */
+    public void drawFrame(Point yourLocation, Point gretaLocation, Point ballLocation);
 
-    public Observable<Keys> getKeys();
+    public Scheduler getRenderThread();
+
+    public Observable<Keys> getClicks();
 
     public static GameEngine create(int width, int height) {
         return new GameEngineImpl(width, height);

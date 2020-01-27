@@ -1,13 +1,12 @@
 package engine;
 
 import io.reactivex.Observable;
-import io.reactivex.Single;
 
 import java.awt.*;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-class RemotePlayerImpl implements RemotePlayer {
+class GretaImpl implements Greta {
     private Random random = new Random();
 
     private final int width;
@@ -15,9 +14,12 @@ class RemotePlayerImpl implements RemotePlayer {
 
     private Point lastLocation;
 
+    private long lastChangeYDirection = -1;
+    private int yDirection = 0;
+
     private Point ballLocation = new Point(0, 0);
 
-    public RemotePlayerImpl(int width, int height) {
+    public GretaImpl(int width, int height) {
         this.width = width;
         this.height = height;
 
@@ -30,9 +32,13 @@ class RemotePlayerImpl implements RemotePlayer {
 
     public Observable<Point> getLocation() {
         return Observable.interval(0, 6, TimeUnit.MILLISECONDS).map(i -> {
-            final int nextY = Math.min(0, (ballLocation.y + random.nextInt(200) - 100) % height);
-            lastLocation.y += Integer.compare(nextY, ballLocation.y);
+            if (lastChangeYDirection == -1 || (System.currentTimeMillis() - lastChangeYDirection) > 250) {
+                lastChangeYDirection = System.currentTimeMillis();
+                final int nextY = (ballLocation.y + random.nextInt(10) - 5) % height;
+                yDirection = Integer.compare(nextY, lastLocation.y);
+            }
+            lastLocation.y += yDirection;
             return lastLocation;
-        });
+        }).distinctUntilChanged();
     }
 }

@@ -6,13 +6,11 @@ import io.reactivex.schedulers.Schedulers;
 import javax.swing.*;
 import java.awt.*;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 class GameEngineImpl extends JFrame implements GameEngine {
 
     private static final String RENDER_THREAD_NAME = "RenderThread";
-    private static final int MAX_EVENTS_PER_SEC = 20;
+    private static final int MAX_EVENTS_PER_SEC = 30;
 
     private final KeyListener keyListener = new KeyListener();
 
@@ -25,8 +23,8 @@ class GameEngineImpl extends JFrame implements GameEngine {
 
     private Scheduler renderScheduler = null;
 
-    private AtomicInteger eventsCounter = new AtomicInteger(0);
-    private AtomicLong counterLastResetTime = new AtomicLong(-1);
+    private int eventsCounter = 0;
+    private long counterLastResetTime = -1;
 
     public GameEngineImpl(int width, int height) {
         this.width = width;
@@ -42,19 +40,29 @@ class GameEngineImpl extends JFrame implements GameEngine {
     }
 
     @Override
-    public void drawFrame(Point padA, Point padB, Point ball) {
+    public void drawSinglePlayer(Point playerLocation) {
         assertOnRenderThread();
         runEventsCounter();
 
-        this.padA = clampToFrame(padA.x, padA.y + 30, RemotePlayerImpl.playerWidth, RemotePlayerImpl.playerHeight);
-        this.padB = clampToFrame(padB.x, padB.y + 30, RemotePlayerImpl.playerWidth, RemotePlayerImpl.playerHeight);
-        this.ball = clampToFrame(ball.x, ball.y + 30, RemoteBallImpl.ballWidth, RemoteBallImpl.ballHeight);
+        this.padA = clampToFrame(playerLocation.x, playerLocation.y, GretaImpl.playerWidth, GretaImpl.playerHeight);
+        this.padB = clampToFrame(-1000, -1000, GretaImpl.playerWidth, GretaImpl.playerHeight);
+        this.ball = clampToFrame(-1000, -1000, BallImpl.ballWidth, BallImpl.ballHeight);
         repaint();
-        try { Thread.sleep(120); } catch (InterruptedException ignored) { }
     }
 
     @Override
-    public Scheduler getRenderScheduler() {
+    public void drawFrame(Point yourLocation, Point gretaLocation, Point ballLocation) {
+        assertOnRenderThread();
+        runEventsCounter();
+
+        this.padA = clampToFrame(yourLocation.x, yourLocation.y, GretaImpl.playerWidth, GretaImpl.playerHeight);
+        this.padB = clampToFrame(gretaLocation.x, gretaLocation.y, GretaImpl.playerWidth, GretaImpl.playerHeight);
+        this.ball = clampToFrame(ballLocation.x, ballLocation.y, BallImpl.ballWidth, BallImpl.ballHeight);
+        repaint();
+    }
+
+    @Override
+    public Scheduler getRenderThread() {
         if (renderScheduler == null) {
             renderScheduler = Schedulers.from(Executors.newSingleThreadScheduledExecutor(r -> {
                 final Thread thread = new Thread(r);
@@ -66,8 +74,11 @@ class GameEngineImpl extends JFrame implements GameEngine {
     }
 
     @Override
-    public Observable<Keys> getKeys() {
-        return keyListener.getKeysEvents().toFlowable(BackpressureStrategy.BUFFER).toObservable();
+    public Observable<Keys> getClicks() {
+        return keyListener.getKeysEvents()
+                .toFlowable(BackpressureStrategy.BUFFER)
+                .flatMap(event -> Flowable.range(0, 100).map(i -> event))
+                .toObservable();
     }
 
     @Override
@@ -75,24 +86,24 @@ class GameEngineImpl extends JFrame implements GameEngine {
         Image gameImage = createImage(getWidth(), getHeight());
         Graphics graphics = gameImage.getGraphics();
 
-        graphics.setColor(Color.CYAN);
-        graphics.fillRect(padA.x, padA.y, RemotePlayerImpl.playerWidth, RemotePlayerImpl.playerHeight);
-        graphics.setColor(Color.MAGENTA);
-        graphics.fillRect(padB.x, padB.y, RemotePlayerImpl.playerWidth, RemotePlayerImpl.playerHeight);
         graphics.setColor(Color.LIGHT_GRAY);
-        graphics.fillRect(ball.x, ball.y, RemoteBallImpl.ballWidth, RemoteBallImpl.ballHeight);
+        graphics.fillRect(ball.x, ball.y, BallImpl.ballWidth, BallImpl.ballHeight);
+        graphics.setColor(Color.CYAN);
+        graphics.fillRect(padA.x, padA.y, GretaImpl.playerWidth, GretaImpl.playerHeight);
+        graphics.setColor(Color.MAGENTA);
+        graphics.fillRect(padB.x, padB.y, GretaImpl.playerWidth, GretaImpl.playerHeight);
 
         g.drawImage(gameImage, 0, 0, this);
     }
 
-    private void runEventsCounter() {
-        if (eventsCounter.incrementAndGet() > MAX_EVENTS_PER_SEC) {
-            final long lastReset = counterLastResetTime.get();
-            if (lastReset != -1 && System.currentTimeMillis() - lastReset >= 1000) {
+    private synchronized void runEventsCounter() {
+        eventsCounter++;
+        if (eventsCounter > MAX_EVENTS_PER_SEC) {
+            if (counterLastResetTime != -1 && (System.currentTimeMillis() - counterLastResetTime) <= 1000) {
                 throw new IllegalStateException("backend.GameEngine: too many frames to draw");
             } else {
-                counterLastResetTime.set(System.currentTimeMillis());
-                eventsCounter.set(0);
+                counterLastResetTime = System.currentTimeMillis();
+                eventsCounter = 0;
             }
         }
     }
